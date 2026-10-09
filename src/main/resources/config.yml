@@ -1,0 +1,387 @@
+# ==============================================================
+#  CustomWeapons config
+#  Add a new weapon by copying a block under "weapons:" and
+#  giving it a new unique id. Then run /weapons reload.
+# ==============================================================
+#
+# Per-weapon settings:
+#   material:           CROSSBOW or BOW (any bow-type item)
+#   name:               Display name (supports & colour codes)
+#   lore:               List of lore lines (supports & colour codes)
+#   custom-model-data:  Optional, for resource packs
+#   glow:               true/false enchant glint
+#   unbreakable:        true/false
+#   enchantments:       Optional, e.g.  quick_charge: 3
+#   ability:            SWAP, LAUNCH, LIGHTNING, EFFECT (see below)
+#   cooldown:           Seconds between shots (0 = none)
+#   minecraft-cooldown: true = use Minecraft's built-in item cooldown (grey
+#                       overlay on the item). Caveat: vanilla cooldowns apply
+#                       to the whole item type, so ALL crossbows (or all bows)
+#                       cool down together. false = plugin-tracked cooldown
+#                       per weapon, shown by chat message only.
+#   damage:             false = arrow deals no damage, true = normal damage
+#   options:            Settings specific to the chosen ability
+#
+# Click abilities (for swords and other melee weapons) - instead of "ability:" use:
+#   right-click:         triggered by right-clicking
+#   sneak-right-click:   triggered by crouching + right-clicking (replaces right-click while crouched)
+#   Each has its own: ability, cooldown (seconds), options.
+#   Optional multi-use: charges (uses before the cooldown), charge-window (seconds to use the rest), charge-gap.
+#   Click ability types:
+#     DASH        options: power (launch speed), min-lift, fall-protection (seconds)
+#     BLIND_AREA  options: radius, duration (seconds), amplifier (0-255),
+#                          exclude-self, include-mobs
+#   Use "ability: NONE" on the weapon itself when it only has click abilities.
+#
+# Hold-to-charge abilities (for spears etc) - "hold-right-click:" charges while right-click is held:
+#   charge-time: seconds to hold before it fires automatically (letting go early cancels it)
+#   stages: how many dings/particle rings play while charging (default 5)
+#   ability: SONIC_BOOM   options: damage, true-damage (ignore armor), range (blocks), knockback, hit-radius,
+#                                  stop-at-blocks (true = beam stops at walls), hit-players
+#   Add "slow-falling: true" on the weapon to fall slowly while holding it.
+#   "fallback-material:" is used if "material:" doesn't exist on your server version.
+#
+# On-hit abilities (any melee weapon) - "on-hit:" runs when you hit something with the weapon:
+#   ability: SCRAMBLE   options: players-only, include-offhand (default true), include-armor (default false)
+#   Each has its own cooldown (seconds). Other projectile abilities (LAUNCH, EFFECT, LIGHTNING...) work here too.
+#   ability: SIFT_SEND  sends whoever you hit to the sift world (see the sift: section)
+#   Right-click ability SIFT_ENTER sends YOU to the sift world, and back if you're already there.
+#
+# Chain axe - "chain:" section on a weapon, plus "attack-speed-bonus:" (extra attack speed while held):
+#   chain.hits / hit-timeout / duration: N hits on the same target within hit-timeout seconds chains
+#                                        them in place for duration seconds
+#   chain.damage-link: window (seconds to hit a 2nd different person), duration, cooldown (per attacker),
+#                      share (1.0 = full damage mirrored), include-mobs
+#   attack-speed-bonus: added to your attack speed while holding it. Sword = 1.6, netherite axe = 1.0, so +0.6.
+#
+# Kill upgrades, combos (for maces etc) - kills are stored on the item itself:
+#   kills:           turn on kill tracking.  count: ALL (any kill) or PLAYERS (player kills only)
+#   right-click:     add "required-kills: N" to lock that ability until the weapon has N kills
+#   bonus-health:    kills: N, hearts: H  -> max health becomes H hearts while the weapon is in your inventory
+#   shield-bypass:   kills: N             -> hits ignore shield blocking
+#   combo:           hits: N (hit that triggers thunder), timeout: seconds between hits,
+#                    require-same-target: true/false,
+#                    hit-gap (minimum seconds between two counted hits - stops click spamming),
+#                    cooldown (seconds after thunder before the next combo can start),
+#                    thunder: damage, radius, true-damage
+#
+# Shoot abilities (for bows) - "on-shoot:" runs the moment the weapon is fired:
+#   RIDE        options: speed (arrow speed, 0 = normal), fall-protection (seconds after hopping off)
+#   (you ride a no-gravity arrow until you crouch, which deletes it)
+#
+# Projectile abilities:
+#   SWAP       options: keep-rotation (true/false)
+#   LAUNCH     options: power (number, how high the target is thrown)
+#   LIGHTNING  options: harmless (true = visual only)
+#   EFFECT     options: effect (e.g. slowness, poison, glowing),
+#                       duration (seconds), amplifier (0 = level I),
+#                       apply-to (TARGET or SHOOTER)
+
+# Set any message to "" (empty quotes) to disable it completely.
+# Logs extra info to the console when right-clicking a compass (for troubleshooting).
+debug: false
+
+# Visual effects. 1.0 = normal, 0.5 = lighter (for weak PCs / big servers), 2.0 = even flashier.
+effects:
+  intensity: 1.0
+
+# The Sift - the world the Ominous Key sends people to
+sift:
+  world: the_sift
+  create-if-missing: true     # creates the world the first time it's needed (loads it if the folder already exists)
+  preload: true               # create/load it when the server starts, so the first trip doesn't lag
+  environment: NORMAL         # NORMAL, NETHER or THE_END
+  type: NORMAL                # NORMAL, FLAT, LARGE_BIOMES or AMPLIFIED
+  return-after: 0             # seconds before people you send there are brought back (0 = they stay until freed)
+  right-click-toggle: true    # right-clicking the key inside the sift takes you back
+  # spawn:                    # optional fixed arrival point (otherwise the world's spawn is used)
+  #   x: 0
+  #   y: 100
+  #   z: 0
+
+messages:
+  prefix: "&8[&dWeapons&8] &7"
+  cooldown: "&cThat weapon is on cooldown for {time}s."
+  given: "&aGave &f{weapon} &ato &f{player}&a."
+  received: "&aYou received &f{weapon}&a."
+  reloaded: "&aConfig reloaded. &f{count} &aweapon(s) loaded."
+  no-permission: "&cYou don't have permission."
+  unknown-weapon: "&cUnknown weapon: &f{weapon}"
+  unknown-player: "&cPlayer not found."
+  swapped: "&dYou swapped places with &f{target}&d!"
+  was-swapped: "&dYou were swapped by &f{shooter}&d!"
+  tracker-set: "&aNow tracking &f{target}&a."
+  tracker-cleared: "&eTracker cleared."
+  tracker-no-compass: "&cYou need to be carrying a Player Tracker."
+  tracker-notify: "&c{player} is tracking you!"
+  dash-blocked: "&cThere's no room to dash that way."
+  blind-used: "&5You blinded &f{count} &5player(s)!"
+  blinded: "&8You were blinded by &f{player}&8!"
+  blind-no-targets: "&cNobody is within range."
+  upgrade-locked: "&cLocked - needs &f{required} &ckills (you have &f{kills}&c)."
+  upgrade-unlocked: "&6Upgrade unlocked: &f{upgrade}&6!"
+  scrambled-attacker: "&dYou scrambled &f{target}&d's inventory!"
+  scrambled-victim: "&dYour inventory was scrambled by &f{player}&d!"
+  chain-bound-attacker: "&7You chained &f{target}&7 in place!"
+  chain-bound-victim: "&7You were chained in place by &f{player}&7!"
+  chain-linked-attacker: "&7You chained &f{a} &7and &f{b} &7together - they share damage!"
+  chain-linked-victim: "&7You are chained to &f{other}&7 - you share all damage!"
+  sift-missing: "&cThe world '{world}' couldn't be created or found."
+  sift-sent-attacker: "&5You sent &f{target} &5into the Sift!"
+  sift-sent-victim: "&5You were sent into the Sift by &f{player}&5!"
+  sift-entered: "&5You step into the Sift..."
+  sift-left: "&5You return from the Sift."
+  sift-returned: "&5The Sift releases you."
+
+weapons:
+
+  swap_crossbow:
+    material: CROSSBOW
+    name: "&5&lSwap Crossbow"
+    lore:
+      - "&7Shoot an arrow at someone to"
+      - "&7swap places with them."
+    custom-model-data: 0
+    glow: true
+    unbreakable: true
+    enchantments:
+      quick_charge: 2
+    ability: SWAP
+    cooldown: 15
+    minecraft-cooldown: true
+    damage: false
+    options:
+      keep-rotation: true
+
+  dash_sword:
+    material: NETHERITE_SWORD
+    name: "&4&lShadow Blade"
+    lore:
+      - "&7Right-click: &ffling yourself where you look"
+      - "&7Crouch + right-click: &fblind everyone"
+      - "&7within 50 blocks for 30s &8(120s cooldown)"
+    glow: true
+    unbreakable: true
+    enchantments:
+      sharpness: 5
+      unbreaking: 3
+    ability: NONE
+    minecraft-cooldown: true
+    right-click:
+      ability: DASH
+      cooldown: 3
+      options:
+        power: 1.8            # launch speed. 1.8 is roughly 20 blocks across; raise it to go further
+        min-lift: 0.35        # small upward push when starting on the ground
+        fall-protection: 6    # seconds of no fall damage after dashing (0 = off)
+    sneak-right-click:
+      ability: BLIND_AREA
+      cooldown: 120
+      options:
+        radius: 50
+        duration: 30
+        amplifier: 255
+        exclude-self: true
+        include-mobs: false
+
+  netherite_spear:
+    material: NETHERITE_SPEAR            # needs a Minecraft 1.21.11+ server
+    fallback-material: NETHERITE_SWORD   # used instead on older servers
+    name: "&3&lWarden Spear"
+    lore:
+      - "&7Hold right-click for 5s to charge,"
+      - "&7then unleash a sonic boom."
+      - "&7Slows your fall while held."
+    glow: true
+    unbreakable: true
+    enchantments:
+      unbreaking: 3
+    ability: NONE
+    minecraft-cooldown: true
+    slow-falling: true
+    hold-right-click:
+      ability: SONIC_BOOM
+      charge-time: 5        # seconds of holding right-click before it fires
+      stages: 5             # number of dings + particle rings while charging
+      cooldown: 10          # seconds after firing
+      options:
+        damage: 20          # 20 = 10 hearts
+        true-damage: true   # true = ignores armor, protection, resistance and shields
+        range: 20
+        knockback: 1.5
+        stop-at-blocks: false
+        hit-players: true
+
+  upgrade_mace:
+    material: MACE                       # needs a Minecraft 1.21+ server
+    fallback-material: NETHERITE_SWORD   # used instead on older servers
+    name: "&c&lReaper Mace"
+    lore:
+      - "&7Grows stronger with every kill."
+      - "&73 hits in a row call down thunder."
+    glow: true
+    unbreakable: true
+    enchantments:
+      unbreaking: 3
+    ability: NONE
+    minecraft-cooldown: true
+    kills:
+      count: PLAYERS          # PLAYERS = only player kills count, ALL = any kill (mobs too)
+    right-click:              # 5 kills: dash (same as the dash sword)
+      ability: DASH
+      required-kills: 5
+      cooldown: 10          # cooldown that starts after both dashes are used
+      charges: 2            # dashes you can do before the cooldown starts
+      charge-window: 5      # seconds you have to use the 2nd dash (then the cooldown starts anyway)
+      charge-gap: 0.4       # minimum seconds between the two dashes
+      options:
+        power: 1.8
+        min-lift: 0.35
+        fall-protection: 6
+    bonus-health:             # 10 kills: 20 hearts while the mace is in your inventory
+      kills: 10
+      hearts: 20
+    shield-bypass:            # 15 kills: hits ignore shields
+      kills: 15
+    combo:
+      hits: 3                 # the 3rd consecutive hit calls thunder
+      timeout: 3              # seconds allowed between hits before the combo resets
+      require-same-target: false
+      hit-gap: 0.8            # minimum seconds between two counted hits (stops click spamming)
+      cooldown: 8             # seconds after the thunder hit before the next combo can start
+      thunder:
+        damage: 8
+        radius: 4
+        true-damage: true
+
+  scrambler:
+    material: TRIAL_KEY                  # needs a Minecraft 1.21+ server
+    fallback-material: TRIPWIRE_HOOK     # used instead on older servers
+    name: "&d&lThe Scrambler"
+    lore:
+      - "&7Hit a player to scramble"
+      - "&7their whole inventory."
+      - "&830s cooldown"
+    glow: true
+    ability: NONE
+    minecraft-cooldown: true
+    on-hit:
+      ability: SCRAMBLE
+      cooldown: 30
+      options:
+        players-only: true
+        include-offhand: true
+        include-armor: false    # true = armor slots get shuffled too
+
+  chain_axe:
+    material: NETHERITE_AXE
+    name: "&8&lThe Chainer"
+    lore:
+      - "&710 hits on the same target"
+      - "&7chains them in place."
+      - "&7Hit two different people in a row"
+      - "&7to chain them together - they"
+      - "&7share all damage."
+    glow: true
+    unbreakable: true
+    enchantments:
+      unbreaking: 3
+    ability: NONE
+    attack-speed-bonus: 0.6    # netherite axe is 1.0, +0.6 = sword speed (1.6)
+    chain:
+      hits: 10                 # hits on the same target to chain them in place
+      hit-timeout: 8           # seconds without hitting before the count resets
+      duration: 4              # seconds the target stays chained in place
+      damage-link:
+        window: 5              # seconds to hit a second, different person to link them
+        duration: 10           # seconds the two stay chained together
+        cooldown: 15           # seconds before you can link another pair
+        share: 1.0             # 1.0 = the other person takes the same damage
+        include-mobs: false
+
+  ominous_trial_key:
+    material: OMINOUS_TRIAL_KEY          # needs a Minecraft 1.21+ server
+    fallback-material: TRIPWIRE_HOOK     # used instead on older servers
+    name: "&5&lKey to the Sift"
+    lore:
+      - "&7Hit someone to send them into the Sift."
+      - "&830s cooldown"
+      - "&7Right-click to step into the Sift yourself."
+      - "&7Right-click again inside to return."
+    glow: true
+    ability: NONE
+    on-hit:
+      ability: SIFT_SEND
+      cooldown: 30
+      options:
+        players-only: true
+    right-click:
+      ability: SIFT_ENTER
+      cooldown: 5
+
+  launch_bow:
+    material: BOW
+    name: "&b&lLaunch Bow"
+    lore:
+      - "&7Shoot to ride your arrow."
+      - "&7Crouch to hop off."
+    glow: true
+    unbreakable: true
+    ability: NONE
+    cooldown: 3
+    damage: false
+    on-shoot:
+      ability: RIDE
+      options:
+        speed: 2.5            # arrow speed (blocks per tick). 0 = normal bow speed
+        fall-protection: 8    # seconds without fall damage after hopping off
+
+  thunder_crossbow:
+    material: CROSSBOW
+    name: "&e&lThunder Crossbow"
+    lore:
+      - "&7Calls lightning on impact."
+    glow: true
+    unbreakable: true
+    ability: LIGHTNING
+    cooldown: 8
+    damage: true
+    options:
+      harmless: false
+
+  frost_bow:
+    material: BOW
+    name: "&3&lFrost Bow"
+    lore:
+      - "&7Slows whoever it hits."
+    glow: true
+    unbreakable: true
+    ability: EFFECT
+    cooldown: 2
+    damage: true
+    options:
+      effect: slowness
+      duration: 6
+      amplifier: 2
+      apply-to: TARGET
+
+# ==============================================================
+#  Player Tracker compass
+#  Get one with /weapons tracker [player].
+#  Right-click it to open the player menu and pick who to track.
+#  Sneak + right-click clears the target.
+#  Works in every dimension. If the target is in another dimension,
+#  it points to their last known position in YOUR dimension.
+# ==============================================================
+tracker:
+  enabled: true
+  name: "&6&lPlayer Tracker"
+  lore:
+    - "&7Right-click to pick a player to track."
+    - "&7Sneak + right-click to stop tracking."
+  gui-title: "&8Select a player to track"
+  update-interval: 20        # ticks between compass updates (20 = 1 second)
+  allow-tracking-self: false
+  notify-target: false       # tell the tracked player they are being tracked
+  show-distance: true
+  show-actionbar: true

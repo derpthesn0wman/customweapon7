@@ -1,0 +1,23 @@
+name: CustomWeapons
+version: '${project.version}'
+main: com.example.weapons.WeaponPlugin
+api-version: '1.20'
+author: You
+description: Config-driven custom weapons, including a crossbow that swaps places with whoever it hits.
+
+commands:
+  weapons:
+    description: Give, list or reload custom weapons.
+    usage: /<command> <give|list|reload> [weapon] [player]
+    aliases: [cw, customweapons]
+
+permissions:
+  customweapons.admin:
+    description: Allows /weapons give and /weapons reload
+    default: op
+  customweapons.use:
+    description: Allows using custom weapons
+    default: true
+  customweapons.tracker:
+    description: Allows using the Player Tracker compass
+    default: true
